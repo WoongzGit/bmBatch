@@ -1,4 +1,4 @@
-package com.bmbatch.batch;
+package com.bmbatch.job;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,7 +29,14 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 @Configuration
-public class bmBatchJob {
+public class MemberRankingBatchJob {
+	
+	@Autowired
+	private JobBuilderFactory jobBuilderFactory;
+	
+	@Autowired
+	private StepBuilderFactory stepBuilderFactory;
+	
 	@Autowired
 	private MemberService memberService;
 	
@@ -42,16 +49,16 @@ public class bmBatchJob {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Bean
-	public Job memberRankingJob(JobBuilderFactory jobBuilderFactory, Step memberPostStep, Step memberCommentStep, Step memberRankingStep) {
+	public Job memberRankingJob() {
 		logger.info("=================memberRankingJob=================");
 		return jobBuilderFactory.get("memberRankingJob" + LocalDateTime.now())
-				.start(memberPostStep)
-				.next(memberCommentStep)
-				.next(memberRankingStep)
+				.start(memberPostStep())
+				.next(memberCommentStep())
+				.next(memberRankingStep())
 				.build();
 	}
 	
-	@Bean public Step memberPostStep(StepBuilderFactory stepBuilderFactory) {
+	@Bean public Step memberPostStep() {
 		logger.info("=================memberPostStep=================");
 		return stepBuilderFactory.get("memberPostStep").<MemberEntity, MemberEntity>chunk(10)
 				.reader(this.memberPostReader())
@@ -85,7 +92,7 @@ public class bmBatchJob {
 		return((List<? extends MemberEntity> memberList) -> memberService.updateAll(memberList));
 	}
 	
-	@Bean public Step memberCommentStep(StepBuilderFactory stepBuilderFactory) {
+	@Bean public Step memberCommentStep() {
 		logger.info("=================memberCommentStep=================");
 		return stepBuilderFactory.get("memberCommentStep").<MemberEntity, MemberEntity>chunk(10)
 				.reader(this.memberCommentReader())
@@ -119,7 +126,7 @@ public class bmBatchJob {
 		return((List<? extends MemberEntity> memberList) -> memberService.updateAll(memberList));
 	}
 	
-	@Bean public Step memberRankingStep(StepBuilderFactory stepBuilderFactory) {
+	@Bean public Step memberRankingStep() {
 		logger.info("=================memberRankingStep=================");
 		return stepBuilderFactory.get("memberRankingStep").<MemberEntity, MemberEntity>chunk(10)
 				.reader(this.memberRankingReader())
